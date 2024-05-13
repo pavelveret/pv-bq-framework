@@ -75,7 +75,7 @@ def create_bigquery_table(dataset_name, table_name, schema, partition_field=None
 
     # Make an API request to create the table
     table = client.create_table(table)  # Make an API request.
-    print(f"Created table instant-funding.{table.dataset_id}.{table.table_id}")
+    print(f"Created table {bq_project}.{table.dataset_id}.{table.table_id}")
 
 # %%
 def load_df_to_bq(dataset_name, table_name, schema, df, partition_field=None, bq_project = env_project):
@@ -97,9 +97,6 @@ def load_df_to_bq(dataset_name, table_name, schema, df, partition_field=None, bq
     job.result()
 
 # %%
-
-
-
 def append_df_to_bq(dataset_name, table_name, schema, df, partition_field=None, bq_project = env_project):
     client = bq_client()
     table_id = f"{bq_project}.{dataset_name}.{table_name}"
@@ -138,7 +135,7 @@ def fetch_data_from_bigquery(sql_query, bq_project = env_project):
     # Return the results as a Pandas DataFrame
     return query_job.to_dataframe()
 
-def materialize_view(dataset, source_view, bq_project = env_project):
+def materialize_view(dataset, source_view, output_name=None, bq_project = env_project):
     """
     Materializes a BigQuery view into a table with a prefix 'MT_'.
 
@@ -146,7 +143,10 @@ def materialize_view(dataset, source_view, bq_project = env_project):
     source_view (str): The name of the source view.
     """
     client = bq_client()
-    destination_table = f"MT_{source_view}"
+    if not output_name:
+        destination_table = f"MT_{source_view}"
+    else:
+        destination_table = output_name
     
     # Construct SQL to check if the destination table exists and delete it if it does
     check_query = f"""
