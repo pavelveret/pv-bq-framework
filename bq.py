@@ -70,8 +70,8 @@ def create_bigquery_table(dataset_name, table_name, schema, partition_field=None
         table.time_partitioning = bigquery.TimePartitioning(
             type_=bigquery.TimePartitioningType.DAY,
             field=partition_field,  # name of column to use for partitioning
-            expiration_ms=1000 * 60 * 60 * 24 * 90,
-        )  # 90 days
+            expiration_ms=None
+        )
 
     # Make an API request to create the table
     table = client.create_table(table)  # Make an API request.
