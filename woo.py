@@ -55,8 +55,9 @@ def fetch_orders_for_date(date_str):
 # %%
 def get_promocode(row):
     for item in row['meta_data']:
-        if item['key'] == 'AffiliateCouponCode':
+        if item['key'] in ['AffiliateCouponCode', 'CouponCode'] and item['value']:
             return item['value']
+    return ''
 
 # %%
 def convert_values_to_string(meta_data):
