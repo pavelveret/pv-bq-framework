@@ -53,6 +53,12 @@ def fetch_orders_for_date(date_str):
     return df_orders
 
 # %%
+def get_affiliate_id(row):
+    for item in row['meta_data']:
+        if item['key'] == 'if_pid' and item['value']:
+            return item['value']
+    return ''
+
 def get_promocode(row):
     for item in row['meta_data']:
         if item['key'] in ['AffiliateCouponCode', 'CouponCode'] and item['value']:
@@ -72,6 +78,7 @@ def modify_df(df):
     df = pd.concat([df.drop(['billing'], axis=1), df['billing'].apply(pd.Series)], axis=1)
     df['meta_data'] = df['meta_data'].apply(convert_values_to_string)
     df['promocode'] = df.apply(get_promocode, axis=1)
+    df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
     return df
 
 
