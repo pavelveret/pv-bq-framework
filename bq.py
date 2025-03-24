@@ -34,7 +34,7 @@ def bq_hint():
 def generate_bq_schema(dictionary):
     schema_list = []
     for col_name, col_type in dictionary.items():
-        if col_type in ['int', 'int8', 'int16', 'int32', 'int64']:
+        if col_type in ['int', 'Int', 'int8', 'int16', 'int32', 'int64']:
             bq_type = 'INTEGER'
         elif col_type in ['float', 'float16', 'float32', 'float64']:
             bq_type = 'FLOAT'
@@ -173,3 +173,40 @@ def materialize_view(dataset, source_view, output_name=None, bq_project = env_pr
 
     print(f"View {source_view} has been materialized into table {destination_table} in project {bq_project}")
 # %%
+def materialize_view_in_other_destanation(origin_dataset, output_dataset, source_view, output_name=None, bq_project = env_project):
+    """
+    Materializes a BigQuery view into a table with a prefix 'MT_'.
+
+    Args:
+    source_view (str): The name of the source view.
+    """
+    client = bq_client()
+    if not output_name:
+        destination_table = f"MT_{source_view}"
+    else:
+        destination_table = output_name
+    
+    # Construct SQL to check if the destination table exists and delete it if it does
+    check_query = f"""
+    SELECT table_name
+    FROM `{bq_project}.{output_dataset}.INFORMATION_SCHEMA.TABLES`
+    WHERE table_name = '{destination_table}'
+    """
+
+    job = client.query(check_query)
+    results = list(job.result())
+
+    if results:
+        # Table exists, so delete it
+        delete_query = f"DROP TABLE `{bq_project}.{output_dataset}.{destination_table}`"
+        client.query(delete_query).result()
+
+    # Create the destination table by selecting all from the view
+    create_table_query = f"""
+    CREATE TABLE `{bq_project}.{output_dataset}.{destination_table}`
+    AS SELECT * FROM `{bq_project}.{origin_dataset}.{source_view}`
+    """
+    
+    client.query(create_table_query).result()
+
+    print(f"View {source_view} has been materialized into table {destination_table} in project {bq_project}")
