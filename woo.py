@@ -88,15 +88,24 @@ def modify_df(df):
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
 
-    def sanitize_bq_repeated_field(value: Union[list, float, None]):
-        if isinstance(value, float) and pd.isna(value):
+    def clean_line_items(line_items):
+        if not isinstance(line_items, list):
             return None
-        if isinstance(value, list):
-            return [v for v in value if isinstance(v, dict)]
-        return value if isinstance(value, list) else None
+        cleaned_items = []
+        for item in line_items:
+            if not isinstance(item, dict):
+                continue
+            # Чистим item['meta_data']
+            meta_data = item.get('meta_data')
+            if isinstance(meta_data, list):
+                item['meta_data'] = [
+                    {k: md[k] for k in ['id', 'key', 'value'] if k in md}
+                    for md in meta_data if isinstance(md, dict)
+                ]
+            cleaned_items.append(item)
+        return cleaned_items
 
-    for col in ['meta_data', 'line_items', 'refunds']:
-        df[col] = df[col].apply(sanitize_bq_repeated_field)
+    df['line_items'] = df['line_items'].apply(clean_line_items)
 
     return df
 
