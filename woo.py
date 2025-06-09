@@ -88,15 +88,15 @@ def modify_df(df):
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
 
+    # Шаг 1 — убрать не-списки или мусор из line_items
     def clean_line_items_column(val):
         if isinstance(val, list):
             return val
-        if pd.isna(val) or val is None:
-            return None
-        return None  # удаляем строки, dict, float и т.п.
+        return None
 
     df['line_items'] = df['line_items'].apply(clean_line_items_column)
 
+    # Шаг 2 — очистить структуру line_items
     def clean_line_items(line_items):
         if not isinstance(line_items, list):
             return None
@@ -104,13 +104,15 @@ def modify_df(df):
         for item in line_items:
             if not isinstance(item, dict):
                 continue
-            # Чистим item['meta_data']
+            # Чистим meta_data внутри каждого line_item
             meta_data = item.get('meta_data')
             if isinstance(meta_data, list):
                 item['meta_data'] = [
                     {k: md[k] for k in ['id', 'key', 'value'] if k in md}
                     for md in meta_data if isinstance(md, dict)
                 ]
+            # Подчищаем taxes (если не используешь — оставляем пустым списком)
+            item['taxes'] = []
             cleaned_items.append(item)
         return cleaned_items
 
