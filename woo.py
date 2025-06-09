@@ -109,30 +109,36 @@ def modify_df(df):
             if not isinstance(item, dict):
                 continue
 
-            # Очищаем meta_data
-            meta_data = item.get('meta_data')
+            # Оставляем только нужные поля
+            allowed_fields = ['name', 'product_id', 'variation_id', 'quantity', 'subtotal',
+                              'subtotal_tax', 'total', 'total_tax', 'sku', 'price', 'parent_name',
+                              'meta_data', 'taxes', 'image']
+            cleaned_item = {k: item[k] for k in allowed_fields if k in item}
+
+            # Чистим meta_data
+            meta_data = cleaned_item.get('meta_data')
             if isinstance(meta_data, list):
-                item['meta_data'] = [
+                cleaned_item['meta_data'] = [
                     {k: md[k] for k in ['id', 'key', 'value'] if k in md}
                     for md in meta_data if isinstance(md, dict)
                 ]
             else:
-                item['meta_data'] = []
+                cleaned_item['meta_data'] = []
 
-            # taxes по схеме должен быть list[str], но мы не используем — просто []
-            item['taxes'] = []
+            # taxes — всегда пустой список
+            cleaned_item['taxes'] = []
 
-            # image должен быть dict с 'id' и 'src'
+            # image — словарь с id и src, либо заглушка
             image = item.get('image')
             if isinstance(image, dict):
-                item['image'] = {
+                cleaned_item['image'] = {
                     'id': image.get('id'),
                     'src': image.get('src')
                 }
             else:
-                item['image'] = {'id': None, 'src': None}
+                cleaned_item['image'] = {'id': None, 'src': None}
 
-            cleaned_items.append(item)
+            cleaned_items.append(cleaned_item)
         return cleaned_items
 
     df['line_items'] = df['line_items'].apply(clean_line_items)
