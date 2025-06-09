@@ -127,7 +127,7 @@ def modify_df(df):
 
     # 👇 Принудительно пустые refunds (REPEATED RECORD)
     df['refunds'] = [[] for _ in range(len(df))]
-
+    print(df)
     return df
 
 # %%
