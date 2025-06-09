@@ -60,9 +60,16 @@ def get_affiliate_id(row):
     return ''
 
 def get_promocode(row):
-    for item in row['meta_data']:
-        if item['key'] in ['AffiliateCouponCode', 'CouponCode'] and item['value']:
-            return item['value']
+    if 'coupon_lines' in row and isinstance(row['coupon_lines'], list):
+        for item in row['coupon_lines']:
+            if 'code' in item and item['code']:
+                return item['code'].upper()
+
+    if 'meta_data' in row and isinstance(row['meta_data'], list):
+        for item in row['meta_data']:
+            if item.get('key') in ['AffiliateCouponCode', 'CouponCode'] and item.get('value'):
+                return item['value'].upper()
+
     return ''
 
 # %%
