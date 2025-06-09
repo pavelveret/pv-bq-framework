@@ -7,7 +7,7 @@ from .countries import add_country_and_phone
 from .bq import append_df_to_bq
 import json
 from datetime import date
-from typing import Union
+import pyarrow as pa
 
 # %%
 environ.Env.read_env()
@@ -137,7 +137,14 @@ def woo_fetch_and_append(date,
         df = modify_df(df)
         df = add_country_and_phone(df)
         df = df.astype(column_types)
-        print(df.head(5))
+
+        for col in df.columns:
+            try:
+                pa.array(df[col])
+            except Exception as e:
+                print(f"❌ Ошибка в колонке: {col}")
+                print(e)
+
         append_df_to_bq(dataset, table, bq_schema, df, partition_field)
     else:
         print('Empty df')
