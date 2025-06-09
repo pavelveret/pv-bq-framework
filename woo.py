@@ -143,9 +143,8 @@ def woo_fetch_and_append(date,
                 pa.array(df[col])
             except Exception as e:
                 print(f"❌ Ошибка в колонке: {col}")
+                print(col.iloc[0])
                 print(e)
-        
-        df['line_items'].iloc[0]
 
         append_df_to_bq(dataset, table, bq_schema, df, partition_field)
     else:
