@@ -103,48 +103,50 @@ def modify_df(df):
 
     def clean_line_items(line_items):
         if not isinstance(line_items, list):
-            return None
+            return []
         cleaned_items = []
         for item in line_items:
             if not isinstance(item, dict):
                 continue
 
-            # Оставляем только нужные поля
-            allowed_fields = ['name', 'product_id', 'variation_id', 'quantity', 'subtotal',
-                              'subtotal_tax', 'total', 'total_tax', 'sku', 'price', 'parent_name',
-                              'meta_data', 'taxes', 'image']
-            cleaned_item = {k: item[k] for k in allowed_fields if k in item}
-
-            # Чистим meta_data
-            meta_data = cleaned_item.get('meta_data')
+            # meta_data
+            meta_data = item.get('meta_data')
             if isinstance(meta_data, list):
-                cleaned_item['meta_data'] = [
+                item['meta_data'] = [
                     {k: md[k] for k in ['id', 'key', 'value'] if k in md}
                     for md in meta_data if isinstance(md, dict)
                 ]
             else:
-                cleaned_item['meta_data'] = []
+                item['meta_data'] = []
 
-            # taxes — всегда пустой список
-            cleaned_item['taxes'] = []
+            # taxes (REPEATED STRING — оставляем пустой список)
+            item['taxes'] = []
 
-            # image — словарь с id и src, либо заглушка
+            # image
             image = item.get('image')
             if isinstance(image, dict):
-                cleaned_item['image'] = {
+                item['image'] = {
                     'id': image.get('id'),
                     'src': image.get('src')
                 }
             else:
-                cleaned_item['image'] = {'id': None, 'src': None}
+                item['image'] = {'id': None, 'src': None}
 
-            cleaned_items.append(cleaned_item)
+            cleaned_items.append(item)
         return cleaned_items
 
     df['line_items'] = df['line_items'].apply(clean_line_items)
 
-    return df
+    # 👇 финальная страховка — если в колонке list, а по схеме должен быть STRING — обнуляем
+    def sanitize_column(col):
+        return col.apply(lambda x: None if isinstance(x, list) else x)
 
+    for col in df.columns:
+        if df[col].dropna().apply(lambda x: isinstance(x, list)).any():
+            print(f'⚠️ Replacing list in column "{col}" with None')
+            df[col] = sanitize_column(df[col])
+
+    return df
 
 # %%
 def get_woo_orders(date, column_types):
