@@ -137,6 +137,7 @@ def woo_fetch_and_append(date,
         df = modify_df(df)
         df = add_country_and_phone(df)
         df = df.astype(column_types)
+        print(df.head(5))
         append_df_to_bq(dataset, table, bq_schema, df, partition_field)
     else:
         print('Empty df')
