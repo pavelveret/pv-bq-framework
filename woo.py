@@ -97,54 +97,36 @@ def convert_values_to_string(meta_data):
 # %%
 def modify_df(df):
     df = pd.concat([df.drop(['billing'], axis=1), df['billing'].apply(pd.Series)], axis=1)
-    df['meta_data'] = df['meta_data'].apply(convert_values_to_string)
+    
+    # Жестко пустой список в meta_data (REPEATED RECORD)
+    df['meta_data'] = [[] for _ in range(len(df))]
+
+    # Промокод и affiliate
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
 
     def clean_line_items(line_items):
         if not isinstance(line_items, list):
             return []
+
         cleaned_items = []
         for item in line_items:
             if not isinstance(item, dict):
                 continue
 
-            # meta_data
-            meta_data = item.get('meta_data')
-            if isinstance(meta_data, list):
-                item['meta_data'] = [
-                    {k: md[k] for k in ['id', 'key', 'value'] if k in md}
-                    for md in meta_data if isinstance(md, dict)
-                ]
-            else:
-                item['meta_data'] = []
-
-            # taxes (REPEATED STRING — оставляем пустой список)
+            # 👇 строго пустые значения для всех вложенных полей
+            item['meta_data'] = []
             item['taxes'] = []
-
-            # image
-            image = item.get('image')
-            if isinstance(image, dict):
-                item['image'] = {
-                    'id': image.get('id'),
-                    'src': image.get('src')
-                }
-            else:
-                item['image'] = {'id': None, 'src': None}
+            item['image'] = {'id': None, 'src': None}
 
             cleaned_items.append(item)
         return cleaned_items
 
+    # 👇 Принудительно нормализуем line_items
     df['line_items'] = df['line_items'].apply(clean_line_items)
 
-    # 👇 финальная страховка — если в колонке list, а по схеме должен быть STRING — обнуляем
-    def sanitize_column(col):
-        return col.apply(lambda x: None if isinstance(x, list) else x)
-
-    for col in df.columns:
-        if df[col].dropna().apply(lambda x: isinstance(x, list)).any():
-            print(f'⚠️ Replacing list in column "{col}" with None')
-            df[col] = sanitize_column(df[col])
+    # 👇 Принудительно пустые refunds (REPEATED RECORD)
+    df['refunds'] = [[] for _ in range(len(df))]
 
     return df
 
