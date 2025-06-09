@@ -33,6 +33,19 @@ def woo_init():
 
 wcapi = woo_init()
 
+def debug_line_items(df):
+    for i, val in enumerate(df['line_items']):
+        if not isinstance(val, list):
+            print(f"❌ row {i} — NOT A LIST: {type(val)}")
+            continue
+        for j, item in enumerate(val):
+            if not isinstance(item, dict):
+                print(f"❌ row {i}, item {j} — NOT A DICT: {type(item)}")
+                continue
+            for k, v in item.items():
+                if isinstance(v, (list, dict)):
+                    print(f"⚠️  row {i}, item {j}, field '{k}' — {type(v)}")
+
 # %%
 def fetch_orders_for_date(date_str):
     all_orders = []
@@ -148,7 +161,7 @@ def woo_fetch_and_append(date,
         df = modify_df(df)
         df = add_country_and_phone(df)
         df = df.astype(column_types)
-
+        debug_line_items(df)
         for col in df.columns:
             try:
                 pa.array(df[col])
