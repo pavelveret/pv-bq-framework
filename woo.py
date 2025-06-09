@@ -7,6 +7,7 @@ from .countries import add_country_and_phone
 from .bq import append_df_to_bq
 import json
 from datetime import date
+from typing import Union
 
 # %%
 environ.Env.read_env()
@@ -86,6 +87,17 @@ def modify_df(df):
     df['meta_data'] = df['meta_data'].apply(convert_values_to_string)
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
+
+    def sanitize_bq_repeated_field(value: Union[list, float, None]):
+        if isinstance(value, float) and pd.isna(value):
+            return None
+        if isinstance(value, list):
+            return [v for v in value if isinstance(v, dict)]
+        return value if isinstance(value, list) else None
+
+    for col in ['meta_data', 'line_items', 'refunds']:
+        df[col] = df[col].apply(sanitize_bq_repeated_field)
+
     return df
 
 
