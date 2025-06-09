@@ -104,8 +104,17 @@ def modify_df(df):
                 ]
             cleaned_items.append(item)
         return cleaned_items
-
+    
     df['line_items'] = df['line_items'].apply(clean_line_items)
+
+    def clean_line_items_column(val):
+        if isinstance(val, list):
+            return val
+        if pd.isna(val) or val is None:
+            return None
+        return None  # удаляем строки, dict, float и т.п.
+
+    df['line_items'] = df['line_items'].apply(clean_line_items_column)
 
     return df
 
