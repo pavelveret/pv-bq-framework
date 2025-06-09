@@ -153,6 +153,7 @@ def woo_fetch_and_append(date,
                          ):
     
     df = fetch_orders_for_date(date)
+    print(df)
     if not len(df) == 0:
         df = modify_df(df)
         df = add_country_and_phone(df)
