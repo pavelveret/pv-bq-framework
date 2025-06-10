@@ -97,7 +97,7 @@ def convert_values_to_string(meta_data):
 # %%
 def modify_df(df):
     df = pd.concat([df.drop(['billing'], axis=1), df['billing'].apply(pd.Series)], axis=1)
-
+    
     # Промокод и affiliate
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
@@ -111,14 +111,18 @@ def modify_df(df):
             if not isinstance(item, dict):
                 continue
 
+            # 👇 строго пустые значения для всех вложенных полей
             item['meta_data'] = []
             item['taxes'] = []
             item['image'] = {'id': None, 'src': None}
 
             cleaned_items.append(item)
         return cleaned_items
-    
+
+    # 👇 Принудительно нормализуем line_items
     df['line_items'] = df['line_items'].apply(clean_line_items)
+
+    # 👇 Принудительно пустые refunds (REPEATED RECORD)
     df['refunds'] = [[] for _ in range(len(df))]
     
     return df
@@ -146,11 +150,19 @@ def woo_fetch_and_append(date,
                          ):
     
     df = fetch_orders_for_date(date)
-    print(df)
+    
     if not len(df) == 0:
         df = modify_df(df)
         df = add_country_and_phone(df)
         df = df.astype(column_types)
+        debug_line_items(df)
+        for col in df.columns:
+            try:
+                pa.array(df[col])
+            except Exception as e:
+                print(f"❌ Ошибка в колонке: {col}")
+                print(e)
+
         append_df_to_bq(dataset, table, bq_schema, df, partition_field)
     else:
         print('Empty df')
