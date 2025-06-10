@@ -98,9 +98,10 @@ def convert_values_to_string(meta_data):
 def modify_df(df):
     df = pd.concat([df.drop(['billing'], axis=1), df['billing'].apply(pd.Series)], axis=1)
     
-    # Промокод и affiliate
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
+
+    df['meta_data'] = [[] for _ in range(len(df))]    
 
     def clean_line_items(line_items):
         if not isinstance(line_items, list):
@@ -110,8 +111,6 @@ def modify_df(df):
         for item in line_items:
             if not isinstance(item, dict):
                 continue
-
-            # 👇 строго пустые значения для всех вложенных полей
             item['meta_data'] = []
             item['taxes'] = []
             item['image'] = {'id': None, 'src': None}
@@ -119,12 +118,10 @@ def modify_df(df):
             cleaned_items.append(item)
         return cleaned_items
 
-    # 👇 Принудительно нормализуем line_items
     df['line_items'] = df['line_items'].apply(clean_line_items)
 
-    # 👇 Принудительно пустые refunds (REPEATED RECORD)
     df['refunds'] = [[] for _ in range(len(df))]
-    
+
     return df
 
 # %%
@@ -150,7 +147,7 @@ def woo_fetch_and_append(date,
                          ):
     
     df = fetch_orders_for_date(date)
-    
+    print()
     if not len(df) == 0:
         df = modify_df(df)
         df = add_country_and_phone(df)
