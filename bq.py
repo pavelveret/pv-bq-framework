@@ -34,7 +34,7 @@ def bq_hint():
 def generate_bq_schema(dictionary):
     schema_list = []
     for col_name, col_type in dictionary.items():
-        if col_type in ['int', 'Int', 'int8', 'int16', 'int32', 'int64']:
+        if col_type in ['int', 'Int', 'int8', 'int16', 'int32', 'int64', 'Int16', 'Int32', 'Int64']:
             bq_type = 'INTEGER'
         elif col_type in ['float', 'float16', 'float32', 'float64']:
             bq_type = 'FLOAT'

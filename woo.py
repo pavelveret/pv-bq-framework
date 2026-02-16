@@ -101,6 +101,9 @@ def modify_df(df):
     df['promocode'] = df.apply(get_promocode, axis=1)
     df['affiliate_id'] = df.apply(get_affiliate_id, axis=1)
 
+    cols_to_set_0 = ['discount_tax', 'discount_total', 'shipping_total', 'shipping_tax', 'cart_tax',]
+    df[cols_to_set_0] = df[cols_to_set_0].replace('', 0)
+    
     df['meta_data'] = [[] for _ in range(len(df))]    
 
     def clean_line_items(line_items):
