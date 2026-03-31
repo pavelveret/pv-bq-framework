@@ -43,7 +43,9 @@ def generate_bq_schema(dictionary):
         elif col_type in ['str', 'string']:
             bq_type = 'STRING'
         elif "datetime64" in col_type:
-            bq_type = 'DATETIME'
+            bq_type = 'DATETIME' 
+        elif "date" in col_type:
+            bq_type = 'DATE' 
         else:
             raise ValueError('Type is not defined')
         
